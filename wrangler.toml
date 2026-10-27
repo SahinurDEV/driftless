@@ -4,6 +4,13 @@ main = "src/index.ts"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 
+
+# Custom domain (Workers)
+[[routes]]
+pattern = "driftless.sahinur.dev"
+custom_domain = true
+
+
 [[d1_databases]]
 binding = "DB"
 database_name = "driftless"
