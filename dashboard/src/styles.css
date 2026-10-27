@@ -208,3 +208,22 @@ textarea { font-family: var(--mono); min-height: 280px; line-height: 1.45; }
   padding: 0.25rem 0.65rem 0.35rem;
 }
 .project-tabs .btn { font-size: 0.9rem; }
+
+.toast {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 50;
+  background: #18202b;
+  border: 1px solid #35507a;
+  color: var(--text);
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.35);
+  font-weight: 600;
+}
+.graph-edges { z-index: 0; }
+.graph-node { z-index: 1; }
+.graph-node.doc.drift {
+  box-shadow: 0 0 0 1px rgba(255,107,122,.45), 0 0 18px rgba(255,107,122,.25);
+}

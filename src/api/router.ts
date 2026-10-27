@@ -492,7 +492,10 @@ async function handleProjectRoutes(
       })),
     ];
     const edges: { from: string; to: string; kind: string }[] = [];
-    for (const d of docs.results ?? []) {
+    const pathNodes = new Set<string>();
+    const docsList = docs.results ?? [];
+    for (const d of docsList) {
+      // Prefer doc → repo so arrows read as "belongs to"
       if (d.repo_id) edges.push({ from: d.id, to: d.repo_id, kind: 'belongs' });
       let paths: string[] = [];
       try {
@@ -501,8 +504,36 @@ async function handleProjectRoutes(
         /* ignore */
       }
       for (const p of paths) {
-        edges.push({ from: d.id, to: `path:${p}`, kind: 'covers' });
-        nodes.push({ id: `path:${p}`, type: 'code', label: p, drift: false } as never);
+        const pid = `path:${p}`;
+        edges.push({ from: d.id, to: pid, kind: 'covers' });
+        if (!pathNodes.has(pid)) {
+          pathNodes.add(pid);
+          nodes.push({ id: pid, type: 'code', label: p, drift: false } as never);
+        }
+      }
+    }
+    // Doc ↔ doc when they share covered names (cross-doc relatedness)
+    const namesByDoc = docsList.map((d) => {
+      let names: string[] = [];
+      try {
+        names = (JSON.parse(d.covered_names) as string[]).map((n) => n.toLowerCase());
+      } catch {
+        names = [];
+      }
+      return { id: d.id, names: new Set(names) };
+    });
+    for (let i = 0; i < namesByDoc.length; i++) {
+      for (let j = i + 1; j < namesByDoc.length; j++) {
+        const a = namesByDoc[i];
+        const b = namesByDoc[j];
+        let shared = false;
+        for (const n of a.names) {
+          if (b.names.has(n)) {
+            shared = true;
+            break;
+          }
+        }
+        if (shared) edges.push({ from: a.id, to: b.id, kind: 'related' });
       }
     }
     return json({ nodes, edges });
