@@ -1,49 +1,35 @@
 #!/usr/bin/env node
 /**
- * Minimal CLI stub — sync is a contributor idea / nice-to-have.
- * Usage:
- *   driftless export --url https://… --token dl_… --project <id> --out ./docs
+ * Driftless CLI entry. Prefers compiled dist, falls back to tsx from repo checkout.
  */
-import { mkdir, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
+import { spawnSync } from 'node:child_process';
 
-const args = process.argv.slice(2);
-const cmd = args[0];
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = join(__dirname, '../../..');
+const dist = join(root, 'dist/cli/cli.js');
+const src = join(root, 'src/local/cli.ts');
 
-function flag(name) {
-  const i = args.indexOf(name);
-  return i >= 0 ? args[i + 1] : undefined;
-}
-
-if (cmd === 'export') {
-  const url = flag('--url')?.replace(/\/$/, '');
-  const token = flag('--token');
-  const project = flag('--project');
-  const out = flag('--out') || './docs';
-  if (!url || !token || !project) {
-    console.error('Usage: driftless export --url <base> --token dl_… --project <id> [--out ./docs]');
+if (existsSync(dist)) {
+  await import(pathToFileURL(dist).href);
+} else if (existsSync(src)) {
+  const require = createRequire(import.meta.url);
+  let tsxBin;
+  try {
+    tsxBin = require.resolve('tsx/cli');
+  } catch {
+    console.error('Driftless: run `npm install` in the repo (tsx required for source mode).');
     process.exit(1);
   }
-  const res = await fetch(`${url}/api/projects/${project}/export`, {
-    headers: { Authorization: `Bearer ${token}` },
+  const r = spawnSync(process.execPath, [tsxBin, src, ...process.argv.slice(2)], {
+    stdio: 'inherit',
+    env: process.env,
   });
-  if (!res.ok) {
-    console.error(await res.text());
-    process.exit(1);
-  }
-  const data = await res.json();
-  for (const f of data.files ?? []) {
-    const path = join(out, f.path);
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, f.content);
-    console.log('wrote', path);
-  }
+  process.exit(r.status ?? 1);
 } else {
-  console.log(`Driftless CLI
-
-Commands:
-  export  Download project markdown (sync upload not implemented yet)
-
-Contributor idea: bi-directional folder sync like Dropbox.
-`);
+  console.error('Driftless CLI not found. Build with npm run build:cli or clone the repo.');
+  process.exit(1);
 }

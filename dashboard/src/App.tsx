@@ -120,7 +120,7 @@ export default function App() {
             )}
             <span>@{user.login}</span>
           </div>
-          <a href="/oauth/logout">Sign out</a>
+<a href="/oauth/logout">Sign out</a>
         </div>
       </aside>
       <main className="main">

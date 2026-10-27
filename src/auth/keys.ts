@@ -30,7 +30,7 @@ export async function revokeApiKey(env: Env, userId: string, keyId: string): Pro
   )
     .bind(nowIso(), keyId, userId)
     .run();
-  return (r.meta.changes ?? 0) > 0;
+  return (r.meta?.changes ?? 0) > 0;
 }
 
 export async function listApiKeys(env: Env, userId: string) {

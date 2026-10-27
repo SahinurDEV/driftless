@@ -2,7 +2,7 @@
   "name": "driftless",
   "version": "0.1.0",
   "private": true,
-  "description": "Self-hosted living docs server for teams on Cloudflare",
+  "description": "Living docs for multi-repo teams — Cloudflare or fully local",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -14,13 +14,17 @@
     "test:watch": "vitest",
     "dev": "wrangler dev",
     "dev:dashboard": "npm run dev --workspace=dashboard",
-    "db:migrate:local": "wrangler d1 migrations apply driftless --local"
+    "db:migrate:local": "wrangler d1 migrations apply driftless --local",
+    "build:cli": "node scripts/build-cli.mjs",
+    "driftless": "tsx src/local/cli.ts"
   },
   "workspaces": [
-    "dashboard"
+    "dashboard",
+    "packages/cli"
   ],
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241022.0",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22.9.0",
     "typescript": "^5.6.3",
     "vitest": "^2.1.4",
@@ -28,12 +32,32 @@
   },
   "dependencies": {
     "hono": "^4.6.8",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "@libsql/client": "^0.15.15",
+    "chokidar": "^4.0.3",
+    "tsx": "^4.19.2",
+    "esbuild": "^0.25.0"
   },
   "allowScripts": {
     "esbuild@0.21.5": true,
     "esbuild@0.17.19": true,
     "workerd@1.20250718.0": true,
-    "sharp@0.33.5": true
-  }
+    "sharp@0.33.5": true,
+    "esbuild@0.28.2": true,
+    "esbuild@0.25.12": true
+  },
+  "bin": {
+    "driftless": "./packages/cli/bin/driftless.js"
+  },
+  "files": [
+    "dist",
+    "src",
+    "migrations",
+    "packages/cli/bin",
+    "dashboard/dist",
+    "assets",
+    "README.md",
+    "LICENSE",
+    "docs"
+  ]
 }

@@ -6,5 +6,5 @@
   "bin": {
     "driftless": "./bin/driftless.js"
   },
-  "description": "Optional local folder sync stub for Driftless"
+  "description": "Local Driftless CLI (serve, mcp, repo, hook)"
 }

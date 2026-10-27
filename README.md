@@ -5,7 +5,7 @@
   </picture>
 </p>
 
-<p align="center"><strong>Self-hosted living docs for teams</strong> — markdown stays in sync with code across repos, with MCP for AI agents. Runs on Cloudflare.</p>
+<p align="center"><strong>Self-hosted living docs for teams</strong> — markdown stays in sync with code across repos, with MCP for AI agents. Runs on Cloudflare — or fully locally with zero cloud deps.</p>
 
 
 ## Why
@@ -27,7 +27,46 @@ When code moves fast (especially with AI), docs go stale. Every developer's agen
 - **Optional** Vectorize + Workers AI embeddings (debounced)
 - **React dashboard** — docs, search, review queue, drift view, graph view, settings
 
-## Quick start (local)
+
+
+## Run locally (no GitHub, no cloud)
+
+Use the same codebase without Cloudflare, GitHub OAuth, or webhooks:
+
+```bash
+npm install
+npm run build:dashboard
+npx tsx src/local/cli.ts init
+npx tsx src/local/cli.ts repo add .
+npx tsx src/local/cli.ts serve
+```
+
+Open http://127.0.0.1:4747 — file watching flags drift; MCP is at `/mcp` and via `driftless mcp` (stdio).
+
+Full walkthrough: **[docs/LOCAL-GUIDE.md](docs/LOCAL-GUIDE.md)** (install, docs frontmatter, drift, review, Cursor/Claude MCP, export, troubleshooting).
+
+```bash
+# Cursor / Claude Desktop (stdio)
+npx tsx src/local/cli.ts mcp --token dl_…
+```
+
+```json
+{
+  "mcpServers": {
+    "driftless": {
+      "command": "npx",
+      "args": ["tsx", "/path/to/driftless/src/local/cli.ts", "mcp", "--token", "dl_…"]
+    }
+  }
+}
+```
+
+HTTP MCP while `serve` is running: `http://127.0.0.1:4747/mcp` with `Authorization: Bearer dl_…`.
+
+> npm publish may require credentials you do not have — run from a clone (`npx tsx src/local/cli.ts` or `npm link`) or `npx github:SahinurDEV/driftless`.
+
+
+## Quick start (Wrangler / Cloudflare local)
 
 ```bash
 npm install

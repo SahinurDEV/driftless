@@ -10,6 +10,7 @@ import { handleGitHubWebhook } from './webhook/github';
 
 export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
+    // Env bindings (D1/R2/Queue) satisfy DbAdapter / DocsBucket / JobsQueue
     const url = new URL(request.url);
     const path = url.pathname;
 

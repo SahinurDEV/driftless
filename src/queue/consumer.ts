@@ -10,7 +10,7 @@ export async function handleQueueBatch(
 ): Promise<void> {
   for (const msg of batch.messages) {
     try {
-      await handleMessage(msg.body, env);
+      await processQueueMessage(msg.body, env);
       msg.ack();
     } catch (e) {
       console.error('queue error', e);
@@ -19,7 +19,7 @@ export async function handleQueueBatch(
   }
 }
 
-async function handleMessage(body: QueueMessage, env: Env): Promise<void> {
+export async function processQueueMessage(body: QueueMessage, env: Env): Promise<void> {
   switch (body.type) {
     case 'drift_check':
       await runDriftJob(env, body);
@@ -33,7 +33,7 @@ async function handleMessage(body: QueueMessage, env: Env): Promise<void> {
   }
 }
 
-async function runDriftJob(env: Env, body: QueueMessage): Promise<void> {
+export async function runDriftJob(env: Env, body: QueueMessage): Promise<void> {
   const changedPaths = body.changedPaths ?? [];
   const changedNames = body.changedNames ?? [];
   if (!changedPaths.length && !changedNames.length) return;

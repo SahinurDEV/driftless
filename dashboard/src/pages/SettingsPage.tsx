@@ -5,11 +5,13 @@ import { api, type Project } from '../lib/api';
 export default function SettingsPage() {
   const { projectId } = useParams();
   const [project, setProject] = useState<Project | null>(null);
-  const [repos, setRepos] = useState<{ id: string; github_owner: string; github_name: string }[]>(
-    [],
-  );
+  const [repos, setRepos] = useState<
+    { id: string; github_owner: string; github_name: string; local_path?: string | null }[]
+  >([]);
   const [owner, setOwner] = useState('');
   const [name, setName] = useState('');
+  const [localPath, setLocalPath] = useState('');
+  const [mode, setMode] = useState<'cloud' | 'local'>('cloud');
   const [keys, setKeys] = useState<unknown[]>([]);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -27,6 +29,10 @@ export default function SettingsPage() {
 
   useEffect(() => {
     load().catch(console.error);
+    fetch('/api/health')
+      .then((r) => r.json())
+      .then((h: { mode?: string }) => setMode(h.mode === 'local' ? 'local' : 'cloud'))
+      .catch(() => {});
   }, [projectId]);
 
   useEffect(() => {
@@ -45,12 +51,20 @@ export default function SettingsPage() {
   }
 
   async function addRepo() {
-    await api(`/api/projects/${projectId}/repos`, {
-      method: 'POST',
-      body: JSON.stringify({ github_owner: owner, github_name: name }),
-    });
-    setOwner('');
-    setName('');
+    if (mode === 'local' && localPath.trim()) {
+      await api(`/api/projects/${projectId}/repos`, {
+        method: 'POST',
+        body: JSON.stringify({ local_path: localPath.trim() }),
+      });
+      setLocalPath('');
+    } else {
+      await api(`/api/projects/${projectId}/repos`, {
+        method: 'POST',
+        body: JSON.stringify({ github_owner: owner, github_name: name }),
+      });
+      setOwner('');
+      setName('');
+    }
     await load();
   }
 
@@ -150,31 +164,53 @@ export default function SettingsPage() {
       </div>
 
       <div className="card">
-        <h3>GitHub repos</h3>
+        <h3>{mode === 'local' ? 'Local folders / repos' : 'GitHub repos'}</h3>
         <ul>
           {repos.map((r) => (
             <li key={r.id}>
-              {r.github_owner}/{r.github_name}
+              {r.local_path ? (
+                <>
+                  <code>{r.local_path}</code>
+                </>
+              ) : (
+                <>
+                  {r.github_owner}/{r.github_name}
+                </>
+              )}
             </li>
           ))}
         </ul>
-        <div className="row">
-          <input
-            placeholder="owner"
-            value={owner}
-            onChange={(e) => setOwner(e.target.value)}
-            style={{ maxWidth: 160 }}
-          />
-          <input
-            placeholder="repo"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            style={{ maxWidth: 160 }}
-          />
-          <button onClick={addRepo}>Connect</button>
-        </div>
+        {mode === 'local' ? (
+          <div className="row">
+            <input
+              placeholder="/absolute/path/to/repo"
+              value={localPath}
+              onChange={(e) => setLocalPath(e.target.value)}
+              style={{ maxWidth: 360 }}
+            />
+            <button onClick={addRepo}>Add folder</button>
+          </div>
+        ) : (
+          <div className="row">
+            <input
+              placeholder="owner"
+              value={owner}
+              onChange={(e) => setOwner(e.target.value)}
+              style={{ maxWidth: 160 }}
+            />
+            <input
+              placeholder="repo"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={{ maxWidth: 160 }}
+            />
+            <button onClick={addRepo}>Connect</button>
+          </div>
+        )}
         <p className="muted" style={{ marginTop: '0.5rem' }}>
-          Point a GitHub webhook to <code>/webhook/github</code> with your WEBHOOK_SECRET.
+          {mode === 'local'
+            ? 'Changes are watched on disk (and optional git post-commit hook). No GitHub webhook needed.'
+            : 'Point a GitHub webhook to /webhook/github with your WEBHOOK_SECRET.'}
         </p>
       </div>
 

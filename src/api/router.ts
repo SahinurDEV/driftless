@@ -23,7 +23,50 @@ export async function handleApi(request: Request, env: Env, path: string): Promi
   try {
     // Public health
     if (path === '/api/health' && request.method === 'GET') {
-      return json({ ok: true, name: env.APP_NAME ?? 'Driftless', version: '0.1.0' });
+      return json({
+        ok: true,
+        name: env.APP_NAME ?? 'Driftless',
+        version: '0.1.0',
+        mode: env.LOCAL_MODE ? 'local' : 'cloud',
+        auth: env.LOCAL_MODE ? (env.LOCAL_PASSWORD_HASH ? 'password' : 'open') : 'github',
+      });
+    }
+
+    // Local watcher / git hook ping (local mode only)
+    if (path === '/api/local/drift-ping' && request.method === 'POST') {
+      if (!env.LOCAL_MODE) return error('Not available', 404);
+      const body = await readJson<{ repo_path?: string; repo_id?: string; paths?: string[] }>(request);
+      const paths = body.paths ?? [];
+      if (!paths.length) return json({ ok: true, matched: 0 });
+      let repoId = body.repo_id;
+      let projectId: string | undefined;
+      if (!repoId && body.repo_path) {
+        const row = await env.DB.prepare(
+          `SELECT id, project_id, local_path FROM repos WHERE local_path IS NOT NULL`,
+        ).all<{ id: string; project_id: string; local_path: string }>();
+        const hit = (row.results ?? []).find(
+          (r) => r.local_path === body.repo_path || body.repo_path!.startsWith(r.local_path),
+        );
+        if (hit) {
+          repoId = hit.id;
+          projectId = hit.project_id;
+        }
+      } else if (repoId) {
+        const r = await env.DB.prepare(`SELECT project_id FROM repos WHERE id = ?`)
+          .bind(repoId)
+          .first<{ project_id: string }>();
+        projectId = r?.project_id;
+      }
+      if (!projectId) return json({ ok: true, matched: 0, warning: 'repo not found' });
+      await env.JOBS.send({
+        type: 'drift_check',
+        projectId,
+        repoId,
+        changedPaths: paths,
+        changedNames: [],
+        commitSha: `hook-${Date.now()}`,
+      });
+      return json({ ok: true, projectId, repoId, paths: paths.length });
     }
 
     // Me
@@ -304,12 +347,27 @@ async function handleProjectRoutes(
     await requireProjectAccess(env, auth, projectId, 'editor');
     if (auth.permission === 'read') return error('Read-only key', 403);
     const body = await readJson<{
-      github_owner: string;
-      github_name: string;
+      github_owner?: string;
+      github_name?: string;
       default_branch?: string;
+      local_path?: string;
     }>(request);
-    if (!body.github_owner || !body.github_name) return error('github_owner and github_name required');
     const id = newId('repo');
+    const ts = nowIso();
+    if (body.local_path) {
+      if (!env.LOCAL_MODE) return error('local_path only supported in local mode', 400);
+      const name = body.github_name || body.local_path.split(/[/\\]/).filter(Boolean).pop() || 'local';
+      await env.DB.prepare(
+        `INSERT INTO repos (id, project_id, github_owner, github_name, default_branch, local_path, created_at, updated_at)
+         VALUES (?, ?, 'local', ?, ?, ?, ?, ?)`,
+      )
+        .bind(id, projectId, name, body.default_branch ?? 'main', body.local_path, ts, ts)
+        .run();
+      return json({ id, local_path: body.local_path }, 201);
+    }
+    if (!body.github_owner || !body.github_name) {
+      return error('github_owner and github_name required (or local_path in local mode)');
+    }
     await env.DB.prepare(
       `INSERT INTO repos (id, project_id, github_owner, github_name, default_branch, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -320,8 +378,8 @@ async function handleProjectRoutes(
         body.github_owner,
         body.github_name,
         body.default_branch ?? 'main',
-        nowIso(),
-        nowIso(),
+        ts,
+        ts,
       )
       .run();
     return json({ id }, 201);

@@ -1,7 +1,46 @@
+/** Minimal D1-like prepared statement used by app code. */
+export interface DbStatement {
+  bind(...values: unknown[]): DbStatement;
+  first<T = Record<string, unknown>>(colName?: string): Promise<T | null>;
+  all<T = Record<string, unknown>>(): Promise<{ results: T[] }>;
+  run(): Promise<{ success: boolean; meta?: { changes?: number } }>;
+}
+
+export interface DbAdapter {
+  prepare(query: string): DbStatement;
+  batch(statements: DbStatement[]): Promise<unknown[]>;
+}
+
+/** Minimal R2-like object store used by app code. */
+export interface DocsObject {
+  text(): Promise<string>;
+  key?: string;
+}
+
+export interface DocsBucket {
+  get(key: string): Promise<DocsObject | null>;
+  put(
+    key: string,
+    value: string | ArrayBuffer | ArrayBufferView | ReadableStream,
+    options?: {
+      httpMetadata?: { contentType?: string };
+      customMetadata?: Record<string, string>;
+    },
+  ): Promise<unknown>;
+  list(options?: { prefix?: string; limit?: number }): Promise<{ objects: { key: string }[] }>;
+}
+
+export interface JobsQueue {
+  send(message: QueueMessage): Promise<void>;
+}
+
 export interface Env {
-  DB: D1Database;
-  DOCS: R2Bucket;
-  JOBS: Queue<QueueMessage>;
+  /** D1 in Cloudflare; LibsqlDb shim locally — both satisfy DbAdapter. */
+  DB: DbAdapter;
+  /** R2 in Cloudflare; filesystem shim locally. */
+  DOCS: DocsBucket;
+  /** Queues in Cloudflare; in-process locally. */
+  JOBS: JobsQueue;
   ASSETS?: Fetcher;
   VECTORIZE?: VectorizeIndex;
   AI?: Ai;
@@ -11,6 +50,10 @@ export interface Env {
   GITHUB_CLIENT_SECRET?: string;
   SESSION_SECRET?: string;
   WEBHOOK_SECRET?: string;
+  /** Set in local Node mode */
+  LOCAL_MODE?: boolean;
+  LOCAL_PASSWORD_HASH?: string;
+  LOCAL_DATA_DIR?: string;
 }
 
 export type TrustMode = 'review' | 'auto' | 'trust';
