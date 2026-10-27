@@ -1,10 +1,12 @@
-# Driftless
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg" />
+    <img src="assets/logo.svg" alt="Driftless" width="280" />
+  </picture>
+</p>
 
-**Self-hosted living docs for teams.** Markdown docs stay in sync with code across multiple repos, and AI agents read, search, and update them over MCP. Runs on Cloudflare at little or no cost.
+<p align="center"><strong>Self-hosted living docs for teams</strong> — markdown stays in sync with code across repos, with MCP for AI agents. Runs on Cloudflare.</p>
 
-Started for Indesk, built so anyone can use it.
-
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/SahinurDEV/driftless)
 
 ## Why
 

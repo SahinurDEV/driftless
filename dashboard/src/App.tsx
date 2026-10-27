@@ -46,7 +46,8 @@ export default function App() {
     <div className="layout">
       <aside className="sidebar">
         <div className="brand">
-          <span /> Driftless
+          <img src="/logo-mark.svg" alt="" width={28} height={28} />
+          <span className="brand-word">Driftless</span>
         </div>
         <nav className="nav">
           <NavLink to="/">Home</NavLink>

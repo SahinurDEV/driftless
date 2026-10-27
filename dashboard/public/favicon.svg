@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Driftless">
+  <defs>
+    <linearGradient id="dl-g" x1="10" y1="6" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4D7FFF"/>
+      <stop offset="1" stop-color="#2EC4B6"/>
+    </linearGradient>
+  </defs>
+  <!-- Page -->
+  <path fill="url(#dl-g)" d="M14 6c0-2.2 1.8-4 4-4h24l12 12v38c0 2.2-1.8 4-4 4H18c-2.2 0-4-1.8-4-4V6z"/>
+  <!-- Fold shadow -->
+  <path fill="#06283A" fill-opacity=".30" d="M42 2v10c0 1.1.9 2 2 2h10L42 2z"/>
+  <!-- Fold face -->
+  <path fill="#FFFFFF" fill-opacity=".94" d="M42 2l12 12H44c-1.1 0-2-.9-2-2V2z"/>
+  <!-- Text lines (aligned) -->
+  <rect x="20" y="20" width="22" height="2.4" rx="1.2" fill="#FFFFFF" fill-opacity=".96"/>
+  <rect x="20" y="26.5" width="15" height="2.4" rx="1.2" fill="#FFFFFF" fill-opacity=".72"/>
+  <!-- Steady baseline = no drift -->
+  <rect x="11" y="38" width="42" height="5" rx="2.5" fill="#0B1220" fill-opacity=".18"/>
+  <rect x="11" y="38" width="42" height="5" rx="2.5" fill="#FFFFFF" fill-opacity=".97"/>
+  <!-- Anchor lock -->
+  <circle cx="32" cy="40.5" r="3.15" fill="#DCE6F5"/>
+  <circle cx="32" cy="40.5" r="1.45" fill="#2F62E0"/>
+</svg>
