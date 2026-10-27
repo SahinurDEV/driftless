@@ -17,6 +17,11 @@ import { exportProjectMarkdown, saveDoc } from '../storage/docs';
 import { newId } from '../util/id';
 import { nowIso } from '../util/time';
 import { createApiKey } from '../auth/keys';
+import { generateDocFromRepo } from '../docs/generate';
+import { parseJUnitXml, ingestTestFailures } from '../tests-ingest/junit';
+import { indexRepoCode } from '../search/code-index';
+import { listDocVersions, rollbackDoc } from '../storage/versions';
+import { readDocVersion } from '../storage/docs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '../..');
@@ -61,6 +66,12 @@ Usage:
   driftless hook install [<git-repo-path>]
   driftless export [--project <id>] [--out ./docs] [--data <dir>]
   driftless import <folder> [--project <id>] [--data <dir>]
+  driftless docs generate <repo-path> [--project <id>] [--data <dir>] [--no-ollama]
+  driftless versions <docId> [--project <id>] [--data <dir>]
+  driftless rollback <docId> <version> [--project <id>] [--data <dir>]
+  driftless test-report <junit.xml> [--project <id>] [--repo <id>] [--data <dir>]
+  driftless test -- <cmd...>   # run command then ingest junit if DRIFTLESS_JUNIT set
+  driftless reindex [--project <id>] [--data <dir>]
 
 Run fully offline — no GitHub, no Cloudflare required.
 Cloudflare deploy of this same repo still works unchanged.
@@ -286,6 +297,185 @@ curl -sS -X POST "http://127.0.0.1:4747/api/local/drift-ping" \\
         console.log('imported', rel);
       }
     }
+    return;
+  }
+
+
+  if (cmd === 'docs') {
+    const sub = args[1];
+    if (sub !== 'generate') {
+      console.error('Usage: driftless docs generate <repo-path>');
+      process.exit(1);
+    }
+    const repoPath = absPath(args[2] || '.');
+    const cfg = loadConfig({ dataDir: dataFlag });
+    const { env, projectId: defaultProject } = await createLocalEnv(cfg, migrationsDir());
+    const projectId = flag(args, '--project') || defaultProject;
+    const generated = await generateDocFromRepo(repoPath, { useOllama: !has(args, '--no-ollama') });
+    // attach to matching local repo if present
+    const repos = await env.DB.prepare(
+      `SELECT id, local_path FROM repos WHERE project_id = ? AND local_path IS NOT NULL`,
+    )
+      .bind(projectId)
+      .all<{ id: string; local_path: string }>();
+    const hit = (repos.results ?? []).find(
+      (r) => r.local_path === repoPath || repoPath.startsWith(r.local_path),
+    );
+    const docId = newId('doc');
+    let result = await saveDoc(env, {
+      projectId,
+      docId,
+      path: generated.path,
+      content: generated.content,
+      baseVersion: null,
+      authorId: LOCAL_USER_ID,
+      authorType: 'system',
+      summary: 'Generated from code',
+      repoId: hit?.id ?? null,
+    });
+    if (!result.ok) {
+      const existing = await env.DB.prepare(
+        `SELECT id, current_version FROM docs WHERE project_id = ? AND path = ?`,
+      )
+        .bind(projectId, generated.path)
+        .first<{ id: string; current_version: number }>();
+      if (existing) {
+        result = await saveDoc(env, {
+          projectId,
+          docId: existing.id,
+          path: generated.path,
+          content: generated.content,
+          baseVersion: existing.current_version,
+          authorId: LOCAL_USER_ID,
+          authorType: 'system',
+          summary: 'Regenerated from code',
+          repoId: hit?.id ?? null,
+        });
+        console.log('Updated', generated.path, existing.id, 'v' + (result.ok ? result.version : '?'));
+      } else {
+        console.error(result.error);
+        process.exit(1);
+      }
+    } else {
+      console.log('Created', generated.path, docId);
+    }
+    console.log('covered_paths:', generated.covered_paths.length, 'covered_names:', generated.covered_names.length);
+    return;
+  }
+
+  if (cmd === 'versions') {
+    const docId = args[1];
+    if (!docId) {
+      console.error('Usage: driftless versions <docId>');
+      process.exit(1);
+    }
+    const cfg = loadConfig({ dataDir: dataFlag });
+    const { env } = await createLocalEnv(cfg, migrationsDir());
+    const versions = await listDocVersions(env, docId);
+    console.log(JSON.stringify(versions, null, 2));
+    return;
+  }
+
+  if (cmd === 'rollback') {
+    const docId = args[1];
+    const toVersion = Number(args[2]);
+    if (!docId || !toVersion) {
+      console.error('Usage: driftless rollback <docId> <version>');
+      process.exit(1);
+    }
+    const cfg = loadConfig({ dataDir: dataFlag });
+    const { env, projectId: defaultProject } = await createLocalEnv(cfg, migrationsDir());
+    const projectId = flag(args, '--project') || defaultProject;
+    const meta = await env.DB.prepare(
+      `SELECT path, current_version FROM docs WHERE id = ? AND project_id = ?`,
+    )
+      .bind(docId, projectId)
+      .first<{ path: string; current_version: number }>();
+    if (!meta) {
+      console.error('Doc not found');
+      process.exit(1);
+    }
+    const result = await rollbackDoc(env, {
+      projectId,
+      docId,
+      path: meta.path,
+      toVersion,
+      currentVersion: meta.current_version,
+      authorId: LOCAL_USER_ID,
+    });
+    if (!result.ok) {
+      console.error(result.error);
+      process.exit(1);
+    }
+    console.log('Rolled back to v' + toVersion + ' as new v' + result.version);
+    return;
+  }
+
+  if (cmd === 'test-report') {
+    const file = args[1];
+    if (!file) {
+      console.error('Usage: driftless test-report <junit.xml>');
+      process.exit(1);
+    }
+    const cfg = loadConfig({ dataDir: dataFlag });
+    const { env, projectId: defaultProject } = await createLocalEnv(cfg, migrationsDir());
+    const projectId = flag(args, '--project') || defaultProject;
+    const repoId = flag(args, '--repo');
+    const xml = await readFile(absPath(file), 'utf8');
+    const failures = parseJUnitXml(xml);
+    const result = await ingestTestFailures(env, {
+      projectId,
+      repoId,
+      failures,
+      commitSha: `cli-${Date.now()}`,
+    });
+    console.log(JSON.stringify({ failures: failures.length, ...result }, null, 2));
+    return;
+  }
+
+  if (cmd === 'test') {
+    const dash = args.indexOf('--');
+    const cmdArgs = dash >= 0 ? args.slice(dash + 1) : args.slice(1);
+    if (!cmdArgs.length) {
+      console.error('Usage: driftless test -- <command...>');
+      process.exit(1);
+    }
+    const { spawn } = await import('node:child_process');
+    const junit = process.env.DRIFTLESS_JUNIT || flag(args, '--junit') || 'junit.xml';
+    const code: number = await new Promise((resolve) => {
+      const child = spawn(cmdArgs[0], cmdArgs.slice(1), { stdio: 'inherit', shell: true });
+      child.on('close', (c) => resolve(c ?? 1));
+    });
+    if (existsSync(junit)) {
+      const cfg = loadConfig({ dataDir: dataFlag });
+      const { env, projectId: defaultProject } = await createLocalEnv(cfg, migrationsDir());
+      const projectId = flag(args, '--project') || defaultProject;
+      const xml = await readFile(junit, 'utf8');
+      const failures = parseJUnitXml(xml);
+      const result = await ingestTestFailures(env, { projectId, failures });
+      console.log('Ingested test report:', { failures: failures.length, ...result });
+    } else {
+      console.log(`No junit file at ${junit} (set DRIFTLESS_JUNIT)`);
+    }
+    process.exit(code);
+  }
+
+  if (cmd === 'reindex') {
+    const cfg = loadConfig({ dataDir: dataFlag });
+    const { env, projectId: defaultProject } = await createLocalEnv(cfg, migrationsDir());
+    const projectId = flag(args, '--project') || defaultProject;
+    const repos = await env.DB.prepare(
+      `SELECT id, local_path FROM repos WHERE project_id = ? AND local_path IS NOT NULL`,
+    )
+      .bind(projectId)
+      .all<{ id: string; local_path: string }>();
+    let total = 0;
+    for (const r of repos.results ?? []) {
+      const res = await indexRepoCode(env, { projectId, repoId: r.id, localPath: r.local_path });
+      console.log('Indexed', r.local_path, res.indexed, 'files');
+      total += res.indexed;
+    }
+    console.log('Total', total);
     return;
   }
 

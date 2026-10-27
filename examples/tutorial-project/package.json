@@ -1,0 +1,18 @@
+{
+  "name": "tutorial-billing",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage=false",
+    "test:junit": "node --experimental-vm-modules node_modules/jest/bin/jest.js --reporters=default --reporters=jest-junit"
+  },
+  "jest-junit": {
+    "outputDirectory": ".",
+    "outputName": "junit.xml"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-junit": "^16.0.0"
+  }
+}

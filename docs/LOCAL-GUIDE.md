@@ -1,5 +1,8 @@
 # Run Driftless fully locally
 
+![Local architecture](./diagrams/architecture-local.svg)
+
+
 No GitHub, no CI/CD, no Cloudflare required. The same repo still deploys to Cloudflare when you want a shared team server.
 
 ## Install
@@ -181,3 +184,43 @@ data/
 ## Cloudflare unchanged
 
 Local mode adds adapters and a CLI. The Worker (`wrangler deploy`), D1, R2, Queues, and GitHub OAuth path remain the default cloud deployment. See the root [README](../README.md) for deploy steps.
+
+
+## Generate a starter doc from code
+
+```bash
+driftless docs generate ./path/to/repo --no-ollama
+```
+
+Dashboard: **Docs → From code**.
+
+## Version history
+
+```bash
+driftless versions <docId>
+driftless rollback <docId> <version>
+```
+
+In the UI open a doc → **History**.
+
+## Drift webhooks
+
+Settings → Drift alerts → Slack or Discord incoming webhook → Save → Send test.
+
+## Test reports (JUnit)
+
+```bash
+driftless test-report ./junit.xml
+# or
+driftless test -- npm test
+```
+
+POST `/api/local/test-results` with JUnit XML also works while `serve` is running.
+
+## Unified search
+
+Dashboard **Search** tab, or reindex with `driftless reindex`. MCP tool: `search_all`.
+
+## Multi-repo overview
+
+Open **/overview** in the dashboard for health across projects.

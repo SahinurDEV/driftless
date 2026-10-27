@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { api, type Project } from '../lib/api';
+import { SkeletonLines } from '../components/Skeleton';
 
 export default function ProjectLayout() {
   const { projectId } = useParams();
@@ -26,7 +27,7 @@ export default function ProjectLayout() {
     );
   }
 
-  if (!project) return <div className="muted">Loading project…</div>;
+  if (!project) return <SkeletonLines lines={4} />;
 
   const base = `/projects/${projectId}`;
   return (
@@ -43,6 +44,7 @@ export default function ProjectLayout() {
       <nav className="row project-tabs" style={{ marginBottom: '1.25rem', gap: '0.35rem' }}>
         {[
           ['docs', 'Docs'],
+          ['search', 'Search'],
           ['review', 'Review'],
           ['drift', 'Drift'],
           ['graph', 'Graph'],

@@ -18,6 +18,9 @@ export default function SettingsPage() {
   const [msg, setMsg] = useState('');
   const [toast, setToast] = useState('');
   const [exportName, setExportName] = useState('');
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [webhookType, setWebhookType] = useState<'slack' | 'discord' | 'generic'>('slack');
+  const [notifyMsg, setNotifyMsg] = useState('');
 
   async function load() {
     const r = await api<{ project: Project; repos: typeof repos }>(`/api/projects/${projectId}`);
@@ -25,6 +28,15 @@ export default function SettingsPage() {
     setRepos(r.repos);
     const k = await api<{ keys: unknown[] }>('/api/keys');
     setKeys(k.keys);
+    try {
+      const n = await api<{ webhook_url: string; webhook_type: 'slack' | 'discord' | 'generic' }>(
+        `/api/projects/${projectId}/notifications`,
+      );
+      setWebhookUrl(n.webhook_url || '');
+      setWebhookType(n.webhook_type || 'slack');
+    } catch {
+      /* older server */
+    }
   }
 
   useEffect(() => {
@@ -227,6 +239,58 @@ export default function SettingsPage() {
         <pre className="muted" style={{ fontSize: '0.8rem' }}>
           {JSON.stringify(keys, null, 2)}
         </pre>
+      </div>
+
+
+      <div className="card">
+        <h3>Drift alerts (Slack / Discord)</h3>
+        <p className="muted">Incoming webhook URL — notified when a new drift flag opens.</p>
+        <div className="row" style={{ marginBottom: '0.5rem' }}>
+          <select
+            value={webhookType}
+            onChange={(e) => setWebhookType(e.target.value as typeof webhookType)}
+            style={{ maxWidth: 160 }}
+          >
+            <option value="slack">Slack</option>
+            <option value="discord">Discord</option>
+            <option value="generic">Generic JSON</option>
+          </select>
+          <input
+            placeholder="https://hooks.slack.com/... or Discord webhook"
+            value={webhookUrl}
+            onChange={(e) => setWebhookUrl(e.target.value)}
+          />
+        </div>
+        <div className="row">
+          <button
+            className="primary"
+            onClick={async () => {
+              await api(`/api/projects/${projectId}/notifications`, {
+                method: 'PUT',
+                body: JSON.stringify({ webhook_url: webhookUrl, webhook_type: webhookType }),
+              });
+              setNotifyMsg('Saved webhook');
+            }}
+          >
+            Save
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                const r = await api<{ ok: boolean; error?: string }>(
+                  `/api/projects/${projectId}/notifications/test`,
+                  { method: 'POST' },
+                );
+                setNotifyMsg(r.ok ? 'Test sent' : r.error || 'Failed');
+              } catch (e) {
+                setNotifyMsg(e instanceof Error ? e.message : 'Test failed');
+              }
+            }}
+          >
+            Send test
+          </button>
+        </div>
+        {notifyMsg && <p className="muted">{notifyMsg}</p>}
       </div>
 
       <div className="card">

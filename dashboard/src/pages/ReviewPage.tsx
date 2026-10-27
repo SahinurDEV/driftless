@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../lib/api';
+import EmptyState from '../components/EmptyState';
 
 type Item = {
   id: string;
@@ -57,8 +58,8 @@ export default function ReviewPage() {
             ))}
             {!items.length && (
               <tr>
-                <td colSpan={2} className="muted">
-                  Nothing pending.
+                <td colSpan={2}>
+                  <EmptyState title="Nothing pending" description="AI-suggested edits will land here in review mode." />
                 </td>
               </tr>
             )}

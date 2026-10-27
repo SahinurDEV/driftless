@@ -14,6 +14,12 @@ import { addSecondsIso, nowIso } from '../util/time';
 import { decideEdit, estimateChangeSize, isSmallSafeFix } from '../trust/modes';
 import { error, json, readJson } from './json';
 import { ensureDefaultWorkspace } from '../auth/workspace';
+import {
+  handleOverview,
+  handleFeatureProjectRoutes,
+  handleFeatureDocRoutes,
+  handleTestResults,
+} from './features';
 
 export async function handleApi(request: Request, env: Env, path: string): Promise<Response> {
   if (request.method === 'OPTIONS') {
@@ -86,6 +92,14 @@ export async function handleApi(request: Request, env: Env, path: string): Promi
 
     // Everything below requires auth
     const auth = await requireAuth(env, request);
+
+    if (path === '/api/overview' && request.method === 'GET') {
+      return handleOverview(env, auth);
+    }
+
+    if (path === '/api/local/test-results' && request.method === 'POST') {
+      return handleTestResults(request, env, auth);
+    }
 
     // Workspaces
     if (path === '/api/workspaces' && request.method === 'GET') {
@@ -295,6 +309,9 @@ async function handleProjectRoutes(
   projectId: string,
   rest: string,
 ): Promise<Response> {
+  const featureHit = await handleFeatureProjectRoutes(request, env, auth, projectId, rest);
+  if (featureHit) return featureHit;
+
   if (rest === '' && request.method === 'GET') {
     await requireProjectAccess(env, auth, projectId, 'viewer');
     const project = await env.DB.prepare(`SELECT * FROM projects WHERE id = ?`)
@@ -430,14 +447,28 @@ async function handleProjectRoutes(
   // Drift
   if (rest === '/drift' && request.method === 'GET') {
     await requireProjectAccess(env, auth, projectId, 'viewer');
-    const flags = await env.DB.prepare(
-      `SELECT f.*, d.path AS doc_path, d.title AS doc_title
-       FROM drift_flags f JOIN docs d ON d.id = f.doc_id
-       WHERE f.project_id = ? AND f.status = 'open'
-       ORDER BY f.created_at DESC`,
-    )
-      .bind(projectId)
-      .all();
+    const url = new URL(request.url);
+    const assignee = url.searchParams.get('assignee');
+    let flags;
+    if (assignee) {
+      flags = await env.DB.prepare(
+        `SELECT f.*, d.path AS doc_path, d.title AS doc_title
+         FROM drift_flags f JOIN docs d ON d.id = f.doc_id
+         WHERE f.project_id = ? AND f.status = 'open' AND (f.assignee = ? OR f.assignee_name = ?)
+         ORDER BY f.created_at DESC`,
+      )
+        .bind(projectId, assignee, assignee)
+        .all();
+    } else {
+      flags = await env.DB.prepare(
+        `SELECT f.*, d.path AS doc_path, d.title AS doc_title
+         FROM drift_flags f JOIN docs d ON d.id = f.doc_id
+         WHERE f.project_id = ? AND f.status = 'open'
+         ORDER BY f.created_at DESC`,
+      )
+        .bind(projectId)
+        .all();
+    }
     return json({ flags: flags.results ?? [] });
   }
 
@@ -546,6 +577,7 @@ async function handleProjectRoutes(
         label: d.title,
         path: d.path,
         drift: d.drift_status !== 'ok',
+        status: d.drift_status,
         repoId: d.repo_id,
       })),
     ];
@@ -761,6 +793,9 @@ async function handleDocRoutes(
     const nextContent = prefix + patched.body;
     return applyEdit(env, auth, projectId, meta, nextContent, body.base_version, body.summary);
   }
+
+  const featDoc = await handleFeatureDocRoutes(request, env, auth, projectId, docId, rest, meta);
+  if (featDoc) return featDoc;
 
   return error('Not found', 404);
 }

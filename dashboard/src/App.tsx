@@ -1,5 +1,16 @@
 import { Link, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Home as HomeIcon,
+  FolderKanban,
+  FileText,
+  ClipboardCheck,
+  AlertTriangle,
+  Share2,
+  Settings,
+  LayoutDashboard,
+  Search,
+} from 'lucide-react';
 import { api, type Project, type User } from './lib/api';
 import Home from './pages/Home';
 import Projects from './pages/Projects';
@@ -11,6 +22,11 @@ import GraphPage from './pages/GraphPage';
 import SettingsPage from './pages/SettingsPage';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
+import OverviewPage from './pages/OverviewPage';
+import SearchPage from './pages/SearchPage';
+import { SkeletonLines } from './components/Skeleton';
+
+const iconProps = { size: 16, strokeWidth: 1.75 } as const;
 
 export default function App() {
   const [user, setUser] = useState<User | null | undefined>(undefined);
@@ -23,7 +39,6 @@ export default function App() {
     setProjects(r.projects);
   }, []);
 
-  // Bootstrap once — do not re-hit /api/me on every navigation
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -62,6 +77,9 @@ export default function App() {
       <div className="boot">
         <img src="/logo-mark.svg" alt="" width={40} height={40} />
         <div className="muted">Starting Driftless…</div>
+        <div style={{ width: 220 }}>
+          <SkeletonLines lines={2} />
+        </div>
       </div>
     );
   }
@@ -83,16 +101,45 @@ export default function App() {
           <span className="brand-word">Driftless</span>
         </Link>
         <nav className="nav">
-          <SideLink to="/">Home</SideLink>
-          <SideLink to="/projects">Projects</SideLink>
+          <SideLink to="/" icon={<HomeIcon {...iconProps} />}>
+            Home
+          </SideLink>
+          <SideLink to="/overview" icon={<LayoutDashboard {...iconProps} />}>
+            Overview
+          </SideLink>
+          <SideLink to="/projects" icon={<FolderKanban {...iconProps} />}>
+            Projects
+          </SideLink>
           {activeProject && (
             <div className="nav-section">
               <div className="nav-section-label">{activeProject.name}</div>
-              <SideLink to={`/projects/${activeProject.id}/docs`}>Docs</SideLink>
-              <SideLink to={`/projects/${activeProject.id}/review`}>Review</SideLink>
-              <SideLink to={`/projects/${activeProject.id}/drift`}>Drift</SideLink>
-              <SideLink to={`/projects/${activeProject.id}/graph`}>Graph</SideLink>
-              <SideLink to={`/projects/${activeProject.id}/settings`}>Settings</SideLink>
+              <SideLink to={`/projects/${activeProject.id}/docs`} icon={<FileText {...iconProps} />}>
+                Docs
+              </SideLink>
+              <SideLink to={`/projects/${activeProject.id}/search`} icon={<Search {...iconProps} />}>
+                Search
+              </SideLink>
+              <SideLink
+                to={`/projects/${activeProject.id}/review`}
+                icon={<ClipboardCheck {...iconProps} />}
+              >
+                Review
+              </SideLink>
+              <SideLink
+                to={`/projects/${activeProject.id}/drift`}
+                icon={<AlertTriangle {...iconProps} />}
+              >
+                Drift
+              </SideLink>
+              <SideLink to={`/projects/${activeProject.id}/graph`} icon={<Share2 {...iconProps} />}>
+                Graph
+              </SideLink>
+              <SideLink
+                to={`/projects/${activeProject.id}/settings`}
+                icon={<Settings {...iconProps} />}
+              >
+                Settings
+              </SideLink>
             </div>
           )}
           {projects.length > 0 && (
@@ -120,12 +167,13 @@ export default function App() {
             )}
             <span>@{user.login}</span>
           </div>
-<a href="/oauth/logout">Sign out</a>
+          <a href="/oauth/logout">Sign out</a>
         </div>
       </aside>
       <main className="main">
         <Routes>
           <Route path="/" element={<Home user={user} projects={projects} />} />
+          <Route path="/overview" element={<OverviewPage />} />
           <Route
             path="/projects"
             element={<Projects projects={projects} onChange={refreshProjects} />}
@@ -134,12 +182,12 @@ export default function App() {
             <Route index element={<Navigate to="docs" replace />} />
             <Route path="docs" element={<DocsPage />} />
             <Route path="docs/:docId" element={<DocsPage />} />
+            <Route path="search" element={<SearchPage />} />
             <Route path="review" element={<ReviewPage />} />
             <Route path="drift" element={<DriftPage />} />
             <Route path="graph" element={<GraphPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
-          {/* Friendly redirects when project id omitted */}
           <Route path="/docs" element={<PickProject projects={projects} area="docs" />} />
           <Route path="/review" element={<PickProject projects={projects} area="review" />} />
           <Route path="/drift" element={<PickProject projects={projects} area="drift" />} />
@@ -152,7 +200,15 @@ export default function App() {
   );
 }
 
-function SideLink({ to, children }: { to: string; children: React.ReactNode }) {
+function SideLink({
+  to,
+  children,
+  icon,
+}: {
+  to: string;
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+}) {
   const loc = useLocation();
   const active =
     to === '/'
@@ -160,7 +216,8 @@ function SideLink({ to, children }: { to: string; children: React.ReactNode }) {
       : loc.pathname === to || loc.pathname.startsWith(`${to}/`);
   return (
     <Link to={to} className={active ? 'active' : ''}>
-      {children}
+      {icon}
+      <span>{children}</span>
     </Link>
   );
 }

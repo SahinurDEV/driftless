@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 420" role="img" aria-label="Driftless Cloudflare architecture">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#4D7FFF"/>
+    </marker>
+  </defs>
+  <rect width="920" height="420" rx="20" fill="#EEF2F7"/>
+  <text x="40" y="42" font-family="DM Sans, system-ui, sans-serif" font-size="20" font-weight="700" fill="#0B1220">Cloudflare mode</text>
+  <text x="40" y="64" font-family="DM Sans, system-ui, sans-serif" font-size="12" fill="#5B6B7C">Shared team server on Workers, D1, R2, and Queues</text>
+  <rect x="40" y="100" width="170" height="70" rx="14" fill="#fff" stroke="#D7E0EA" stroke-width="1.5"/>
+  <text x="125.0" y="128" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="14" font-weight="700" fill="#0B1220">GitHub OAuth</text>
+  <text x="125.0" y="148" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="11" fill="#5B6B7C">+ webhooks</text>
+  <rect x="250" y="100" width="200" height="70" rx="14" fill="#fff" stroke="#D7E0EA" stroke-width="1.5"/>
+  <text x="350.0" y="128" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="14" font-weight="700" fill="#0B1220">Worker</text>
+  <text x="350.0" y="148" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="11" fill="#5B6B7C">API · MCP · dashboard</text>
+  <rect x="500" y="90" width="150" height="70" rx="14" fill="#fff" stroke="#D7E0EA" stroke-width="1.5"/>
+  <text x="575.0" y="118" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="14" font-weight="700" fill="#0B1220">D1 + FTS5</text>
+  <text x="575.0" y="138" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="11" fill="#5B6B7C">metadata & flags</text>
+  <rect x="700" y="90" width="160" height="70" rx="14" fill="#fff" stroke="#D7E0EA" stroke-width="1.5"/>
+  <text x="780.0" y="118" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="14" font-weight="700" fill="#0B1220">R2</text>
+  <text x="780.0" y="138" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="11" fill="#5B6B7C">doc versions</text>
+  <rect x="250" y="230" width="200" height="70" rx="14" fill="#fff" stroke="#D7E0EA" stroke-width="1.5"/>
+  <text x="350.0" y="258" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="14" font-weight="700" fill="#0B1220">Queues</text>
+  <text x="350.0" y="278" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="11" fill="#5B6B7C">drift + embed jobs</text>
+  <rect x="500" y="230" width="150" height="70" rx="14" fill="#fff" stroke="#D7E0EA" stroke-width="1.5"/>
+  <text x="575.0" y="258" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="14" font-weight="700" fill="#0B1220">Agents</text>
+  <text x="575.0" y="278" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="11" fill="#5B6B7C">MCP clients</text>
+  <rect x="700" y="230" width="160" height="70" rx="14" fill="#fff" stroke="#D7E0EA" stroke-width="1.5"/>
+  <text x="780.0" y="258" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="14" font-weight="700" fill="#0B1220">Optional</text>
+  <text x="780.0" y="278" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="11" fill="#5B6B7C">Vectorize / AI</text>
+  <line x1="210" y1="135" x2="250" y2="135" stroke="#4D7FFF" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="230.0" y="127.0" text-anchor="middle" font-size="10" fill="#5B6B7C" font-family="DM Sans, system-ui, sans-serif">auth/events</text>
+  <line x1="450" y1="135" x2="500" y2="135" stroke="#4D7FFF" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <line x1="650" y1="125" x2="700" y2="125" stroke="#4D7FFF" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <line x1="350" y1="170" x2="350" y2="230" stroke="#4D7FFF" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="350.0" y="192.0" text-anchor="middle" font-size="10" fill="#5B6B7C" font-family="DM Sans, system-ui, sans-serif">jobs</text>
+  <line x1="450" y1="265" x2="500" y2="265" stroke="#4D7FFF" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="475.0" y="257.0" text-anchor="middle" font-size="10" fill="#5B6B7C" font-family="DM Sans, system-ui, sans-serif">tools</text>
+  <rect x="40" y="340" width="840" height="50" rx="12" fill="#fff" stroke="#D7E0EA"/>
+  <text x="60" y="370" font-family="DM Sans, system-ui, sans-serif" font-size="12" fill="#0B1220">Same product surface as local mode — trust modes, review queue, share links, export</text>
+</svg>

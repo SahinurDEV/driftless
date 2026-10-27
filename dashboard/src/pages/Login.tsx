@@ -55,7 +55,7 @@ export default function Login() {
   if (mode === 'local' && auth === 'password') {
     return (
       <div className="hero">
-        <img className="hero-logo" src="/logo-dark.svg" alt="Driftless" width={220} />
+        <img className="hero-logo" src="/logo.svg" alt="Driftless" width={220} />
         <div className="pill">Local mode</div>
         <h1>Sign in to your local Driftless</h1>
         <p className="muted">This instance is password-protected on localhost.</p>
@@ -79,7 +79,7 @@ export default function Login() {
   if (mode === 'local') {
     return (
       <div className="hero">
-        <img className="hero-logo" src="/logo-dark.svg" alt="Driftless" width={220} />
+        <img className="hero-logo" src="/logo.svg" alt="Driftless" width={220} />
         <div className="pill">Local mode</div>
         <h1>Opening local workspace…</h1>
         <p className="muted">No GitHub required. Redirecting…</p>
@@ -89,7 +89,7 @@ export default function Login() {
 
   return (
     <div className="hero">
-      <img className="hero-logo" src="/logo-dark.svg" alt="Driftless" width={220} />
+      <img className="hero-logo" src="/logo.svg" alt="Driftless" width={220} />
       <div className="pill">Living docs for multi-repo teams</div>
       <h1>Keep docs in sync with the code</h1>
       <p className="muted">

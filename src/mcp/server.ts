@@ -1,5 +1,6 @@
 import { requireAuth, requireProjectAccess, AuthError, isAuthError } from '../auth/context';
 import { readDocVersion, saveDoc, searchDocs } from '../storage/docs';
+import { searchAll } from '../search/code-index';
 import { decideEdit, estimateChangeSize, isSmallSafeFix } from '../trust/modes';
 import type { Env, TrustMode } from '../types';
 import {
@@ -22,6 +23,19 @@ const TOOLS = [
   {
     name: 'search_docs',
     description: 'Keyword search docs in a project (FTS5)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project_id: { type: 'string' },
+        query: { type: 'string' },
+        limit: { type: 'number' },
+      },
+      required: ['project_id', 'query'],
+    },
+  },
+  {
+    name: 'search_all',
+    description: 'Unified keyword search across docs and indexed code (FTS5)',
     inputSchema: {
       type: 'object',
       properties: {
@@ -226,6 +240,14 @@ async function callTool(
   await requireProjectAccess(env, auth, projectId, 'viewer');
 
   switch (name) {
+    case 'search_all': {
+      const projectId = String(args.project_id || '');
+      const query = String(args.query || '');
+      const limit = Number(args.limit || 20);
+      await requireProjectAccess(env, auth, projectId, 'viewer');
+      const results = await searchAll(env, projectId, query, limit);
+      return results;
+    }
     case 'search_docs': {
       const hits = await searchDocs(env, projectId, String(args.query ?? ''), Number(args.limit ?? 20));
       return { results: hits };

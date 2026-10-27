@@ -13,7 +13,7 @@ import { hashToken } from '../util/hash';
 export const LOCAL_USER_ID = 'user_local';
 export const LOCAL_LOGIN = 'local';
 
-const MIGRATIONS = ['0001_init.sql', '0002_local_path.sql'];
+const MIGRATIONS = ['0001_init.sql', '0002_local_path.sql', '0003_features.sql'];
 
 export async function ensureDataDir(cfg: LocalConfig): Promise<void> {
   await mkdir(cfg.dataDir, { recursive: true });

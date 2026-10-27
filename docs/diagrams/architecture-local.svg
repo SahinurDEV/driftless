@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 420" role="img" aria-label="Driftless local architecture">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#4D7FFF"/>
+    </marker>
+    <linearGradient id="hdr" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#4D7FFF"/><stop offset="1" stop-color="#2EC4B6"/>
+    </linearGradient>
+  </defs>
+  <rect width="920" height="420" rx="20" fill="#EEF2F7"/>
+  <text x="40" y="42" font-family="DM Sans, system-ui, sans-serif" font-size="20" font-weight="700" fill="#0B1220">Local mode</text>
+  <text x="40" y="64" font-family="DM Sans, system-ui, sans-serif" font-size="12" fill="#5B6B7C">Everything on your machine — no GitHub or Cloudflare required</text>
+  <rect x="40" y="100" width="180" height="70" rx="14" fill="#fff" stroke="#D7E0EA" stroke-width="1.5"/>
+  <text x="130.0" y="128" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="14" font-weight="700" fill="#0B1220">CLI / MCP</text>
+  <text x="130.0" y="148" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="11" fill="#5B6B7C">stdio or HTTP</text>
+  <rect x="280" y="100" width="200" height="70" rx="14" fill="#fff" stroke="#D7E0EA" stroke-width="1.5"/>
+  <text x="380.0" y="128" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="14" font-weight="700" fill="#0B1220">Local server</text>
+  <text x="380.0" y="148" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="11" fill="#5B6B7C">:4747 API + dashboard</text>
+  <rect x="560" y="90" width="160" height="70" rx="14" fill="#fff" stroke="#D7E0EA" stroke-width="1.5"/>
+  <text x="640.0" y="118" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="14" font-weight="700" fill="#0B1220">SQLite + FTS5</text>
+  <text x="640.0" y="138" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="11" fill="#5B6B7C">~/.driftless</text>
+  <rect x="740" y="90" width="140" height="70" rx="14" fill="#fff" stroke="#D7E0EA" stroke-width="1.5"/>
+  <text x="810.0" y="118" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="14" font-weight="700" fill="#0B1220">Docs files</text>
+  <text x="810.0" y="138" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="11" fill="#5B6B7C">markdown versions</text>
+  <rect x="280" y="230" width="200" height="70" rx="14" fill="#fff" stroke="#D7E0EA" stroke-width="1.5"/>
+  <text x="380.0" y="258" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="14" font-weight="700" fill="#0B1220">File watcher</text>
+  <text x="380.0" y="278" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="11" fill="#5B6B7C">chokidar + git hook</text>
+  <rect x="560" y="230" width="160" height="70" rx="14" fill="#fff" stroke="#D7E0EA" stroke-width="1.5"/>
+  <text x="640.0" y="258" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="14" font-weight="700" fill="#0B1220">Your repos</text>
+  <text x="640.0" y="278" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="11" fill="#5B6B7C">covered_paths</text>
+  <rect x="40" y="230" width="180" height="70" rx="14" fill="#fff" stroke="#D7E0EA" stroke-width="1.5"/>
+  <text x="130.0" y="258" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="14" font-weight="700" fill="#0B1220">Dashboard</text>
+  <text x="130.0" y="278" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="11" fill="#5B6B7C">React light UI</text>
+  <line x1="220" y1="135" x2="280" y2="135" stroke="#4D7FFF" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="250.0" y="127.0" text-anchor="middle" font-size="10" fill="#5B6B7C" font-family="DM Sans, system-ui, sans-serif">commands</text>
+  <line x1="480" y1="135" x2="560" y2="135" stroke="#4D7FFF" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="520.0" y="127.0" text-anchor="middle" font-size="10" fill="#5B6B7C" font-family="DM Sans, system-ui, sans-serif">read/write</text>
+  <line x1="720" y1="125" x2="740" y2="125" stroke="#4D7FFF" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <line x1="380" y1="170" x2="380" y2="230" stroke="#4D7FFF" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="380.0" y="192.0" text-anchor="middle" font-size="10" fill="#5B6B7C" font-family="DM Sans, system-ui, sans-serif">drift ping</text>
+  <line x1="480" y1="265" x2="560" y2="265" stroke="#4D7FFF" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="520.0" y="257.0" text-anchor="middle" font-size="10" fill="#5B6B7C" font-family="DM Sans, system-ui, sans-serif">watch</text>
+  <line x1="220" y1="265" x2="280" y2="265" stroke="#4D7FFF" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="250.0" y="257.0" text-anchor="middle" font-size="10" fill="#5B6B7C" font-family="DM Sans, system-ui, sans-serif">UI</text>
+  <rect x="40" y="340" width="840" height="50" rx="12" fill="#fff" stroke="#D7E0EA"/>
+  <text x="60" y="370" font-family="DM Sans, system-ui, sans-serif" font-size="12" fill="#0B1220">Drift alerts → optional Slack/Discord webhooks · JUnit ingest · code FTS search · version history</text>
+</svg>

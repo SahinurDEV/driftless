@@ -1,12 +1,25 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg" />
-    <img src="assets/logo.svg" alt="Driftless" width="280" />
-  </picture>
+  <img src="assets/logo.svg" alt="Driftless" width="280" />
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT" /></a>
+  <a href="https://github.com/SahinurDEV/driftless/actions"><img src="https://img.shields.io/badge/tests-vitest-brightgreen.svg" alt="tests" /></a>
+  <a href="https://driftless.sahinur.dev"><img src="https://img.shields.io/badge/deploy-Cloudflare-F38020.svg" alt="deploy" /></a>
+  <a href="https://docs.driftless.sahinur.dev"><img src="https://img.shields.io/badge/docs-VitePress-5c6bc0.svg" alt="docs" /></a>
 </p>
 
 <p align="center"><strong>Self-hosted living docs for teams</strong> — markdown stays in sync with code across repos, with MCP for AI agents. Runs on Cloudflare — or fully locally with zero cloud deps.</p>
 
+<p align="center">
+  <img src="assets/demo.gif" alt="Driftless demo" width="720" />
+</p>
+
+<p align="center">
+  <img src="assets/screenshots/overview.png" alt="Overview" width="280" />
+  <img src="assets/screenshots/docs.png" alt="Docs" width="280" />
+  <img src="assets/screenshots/drift.png" alt="Drift" width="280" />
+</p>
 
 ## Why
 
@@ -175,6 +188,10 @@ A **read-only** API key can never write, even in Trust mode.
 
 ## Architecture
 
+![Local](docs/diagrams/architecture-local.svg)
+
+![Cloudflare](docs/diagrams/architecture-cloudflare.svg)
+
 ```
 Workers  → REST API, MCP, OAuth, webhooks, share links, dashboard
 D1       → metadata, roles, hashed API keys, drift flags, FTS5
@@ -182,6 +199,8 @@ R2       → every markdown version (+ optional Graft output)
 Queues   → drift checks, debounced embeddings
 Vectorize / Workers AI → optional semantic search
 ```
+
+Docs site: [docs.driftless.sahinur.dev](https://docs.driftless.sahinur.dev) · Tutorial: [docs/TUTORIAL.md](docs/TUTORIAL.md)
 
 ## Contributor ideas (not built by the maintainer)
 

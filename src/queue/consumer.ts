@@ -3,6 +3,7 @@ import { readDocVersion } from '../storage/docs';
 import type { Env, QueueMessage } from '../types';
 import { newId } from '../util/id';
 import { nowIso } from '../util/time';
+import { notifyProjectDrift } from '../notify/webhooks';
 
 export async function handleQueueBatch(
   batch: MessageBatch<QueueMessage>,
@@ -121,6 +122,14 @@ export async function runDriftJob(env: Env, body: QueueMessage): Promise<void> {
         m.docId,
       ),
     ]);
+    const docMeta = docs.find((d) => d.id === m.docId);
+    void notifyProjectDrift(env, body.projectId, {
+      flagId: id,
+      docTitle: docMeta?.title ?? m.docId,
+      docPath: docMeta?.path ?? '',
+      reason: m.reason,
+      matchType: m.matchType,
+    });
   }
 }
 
