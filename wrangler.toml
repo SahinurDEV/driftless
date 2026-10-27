@@ -1,0 +1,44 @@
+name = "driftless"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "driftless"
+database_id = "00000000-0000-0000-0000-000000000001"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "DOCS"
+bucket_name = "driftless-docs"
+
+[[queues.producers]]
+binding = "JOBS"
+queue = "driftless-jobs"
+
+[[queues.consumers]]
+queue = "driftless-jobs"
+max_batch_size = 10
+max_batch_timeout = 5
+
+# Optional semantic search — uncomment after creating the index:
+# [[vectorize]]
+# binding = "VECTORIZE"
+# index_name = "driftless-embeddings"
+#
+# [ai]
+# binding = "AI"
+
+[vars]
+APP_NAME = "Driftless"
+
+# Secrets (wrangler secret put): GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET,
+# SESSION_SECRET, WEBHOOK_SECRET, APP_BASE_URL
+
+[assets]
+directory = "./dashboard/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+# Worker handles /api, /mcp, /oauth, /webhook, /share first; falls through to assets.
+run_worker_first = true
