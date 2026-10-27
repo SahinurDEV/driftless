@@ -2,6 +2,7 @@ import type { Env } from '../types';
 import { hashToken } from '../util/hash';
 import { newId, newToken } from '../util/id';
 import { addSecondsIso, nowIso } from '../util/time';
+import { ensureDefaultWorkspace } from './workspace';
 
 const GITHUB_AUTHORIZE = 'https://github.com/login/oauth/authorize';
 const GITHUB_TOKEN = 'https://github.com/login/oauth/access_token';
@@ -114,6 +115,8 @@ export async function handleOAuthCallback(env: Env, request: Request): Promise<R
       .bind(gh.login, gh.name ?? null, gh.email ?? null, gh.avatar_url ?? null, ts, user.id)
       .run();
   }
+
+  await ensureDefaultWorkspace(env, user.id);
 
   const sessionToken = newToken(32);
   const sessionId = newId('ses');

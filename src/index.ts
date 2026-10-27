@@ -1,4 +1,6 @@
 import { handleApi } from './api/router';
+import { isAuthError } from './auth/context';
+import { error as apiError } from './api/json';
 import { handleOAuthCallback, logout, startOAuth } from './auth/github';
 import { handleMcp } from './mcp/server';
 import { handleQueueBatch } from './queue/consumer';
@@ -13,26 +15,26 @@ export default {
 
     try {
       if (path === '/oauth/github' || path === '/oauth/github/login') {
-        return startOAuth(env, request, url.searchParams.get('redirect') ?? '/');
+        return await startOAuth(env, request, url.searchParams.get('redirect') ?? '/');
       }
       if (path === '/oauth/github/callback') {
-        return handleOAuthCallback(env, request);
+        return await handleOAuthCallback(env, request);
       }
       if (path === '/oauth/logout') {
-        return logout(env, request);
+        return await logout(env, request);
       }
       if (path === '/webhook/github') {
-        return handleGitHubWebhook(request, env);
+        return await handleGitHubWebhook(request, env);
       }
       if (path === '/mcp' || path.startsWith('/mcp/')) {
-        return handleMcp(request, env);
+        return await handleMcp(request, env);
       }
       const share = path.match(/^\/share\/([^/]+)\/?$/);
       if (share) {
-        return handleShare(request, env, share[1]);
+        return await handleShare(request, env, share[1]);
       }
       if (path.startsWith('/api/')) {
-        return handleApi(request, env, path);
+        return await handleApi(request, env, path);
       }
 
       // Serve dashboard assets
@@ -49,6 +51,9 @@ export default {
         { headers: { 'Content-Type': 'text/html; charset=utf-8' } },
       );
     } catch (e) {
+      if (isAuthError(e)) {
+        return apiError(e.message, e.status);
+      }
       console.error(e);
       return new Response(JSON.stringify({ error: e instanceof Error ? e.message : 'error' }), {
         status: 500,

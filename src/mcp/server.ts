@@ -1,4 +1,4 @@
-import { requireAuth, requireProjectAccess, AuthError } from '../auth/context';
+import { requireAuth, requireProjectAccess, AuthError, isAuthError } from '../auth/context';
 import { readDocVersion, saveDoc, searchDocs } from '../storage/docs';
 import { decideEdit, estimateChangeSize, isSmallSafeFix } from '../trust/modes';
 import type { Env, TrustMode } from '../types';
@@ -158,7 +158,12 @@ export async function handleMcp(request: Request, env: Env): Promise<Response> {
   try {
     auth = await requireAuth(env, request);
   } catch (e) {
-    if (e instanceof AuthError) return rpcError(null, -32001, e.message, e.status);
+    const status = Number((e as { status?: unknown })?.status);
+    if (status === 401 || status === 403 || isAuthError(e)) {
+      const msg = e instanceof Error ? e.message : 'Unauthorized';
+      const st = isAuthError(e) ? e.status : status || 401;
+      return rpcError(null, -32001, msg, st);
+    }
     throw e;
   }
 
@@ -199,7 +204,12 @@ export async function handleMcp(request: Request, env: Env): Promise<Response> {
     }
     return rpcError(id, -32601, `Method not found: ${body.method}`);
   } catch (e) {
-    if (e instanceof AuthError) return rpcError(id, -32001, e.message, e.status);
+    const status = Number((e as { status?: unknown })?.status);
+    if (status === 401 || status === 403 || isAuthError(e)) {
+      const msg = e instanceof Error ? e.message : 'Unauthorized';
+      const st = isAuthError(e) ? e.status : status || 401;
+      return rpcError(id, -32001, msg, st);
+    }
     console.error(e);
     return rpcError(id, -32000, e instanceof Error ? e.message : 'Internal error');
   }

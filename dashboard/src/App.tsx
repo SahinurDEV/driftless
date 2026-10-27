@@ -1,5 +1,5 @@
 import { Link, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, type Project, type User } from './lib/api';
 import Home from './pages/Home';
 import Projects from './pages/Projects';
@@ -10,27 +10,60 @@ import DriftPage from './pages/DriftPage';
 import GraphPage from './pages/GraphPage';
 import SettingsPage from './pages/SettingsPage';
 import Login from './pages/Login';
+import NotFound from './pages/NotFound';
 
 export default function App() {
   const [user, setUser] = useState<User | null | undefined>(undefined);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [bootError, setBootError] = useState('');
   const loc = useLocation();
 
+  const refreshProjects = useCallback(async () => {
+    const r = await api<{ projects: Project[] }>('/api/projects');
+    setProjects(r.projects);
+  }, []);
+
+  // Bootstrap once — do not re-hit /api/me on every navigation
   useEffect(() => {
-    api<{ user: User | null }>('/api/me')
-      .then((r) => setUser(r.user))
-      .catch(() => setUser(null));
+    let cancelled = false;
+    (async () => {
+      try {
+        const me = await api<{ user: User | null }>('/api/me');
+        if (cancelled) return;
+        setUser(me.user);
+        if (me.user) {
+          try {
+            await refreshProjects();
+          } catch {
+            setProjects([]);
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          setUser(null);
+          setBootError('Could not reach the API');
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshProjects]);
+
+  const activeProjectId = useMemo(() => {
+    const m = loc.pathname.match(/^\/projects\/([^/]+)/);
+    return m?.[1] && m[1] !== 'new' ? m[1] : null;
   }, [loc.pathname]);
 
-  useEffect(() => {
-    if (!user) return;
-    api<{ projects: Project[] }>('/api/projects')
-      .then((r) => setProjects(r.projects))
-      .catch(() => setProjects([]));
-  }, [user]);
+  const activeProject = projects.find((p) => p.id === activeProjectId) || null;
 
   if (user === undefined) {
-    return <div className="main muted">Loading…</div>;
+    return (
+      <div className="boot">
+        <img src="/logo-mark.svg" alt="" width={40} height={40} />
+        <div className="muted">Starting Driftless…</div>
+      </div>
+    );
   }
 
   if (!user) {
@@ -45,20 +78,36 @@ export default function App() {
   return (
     <div className="layout">
       <aside className="sidebar">
-        <div className="brand">
+        <Link to="/" className="brand" style={{ color: 'inherit', textDecoration: 'none' }}>
           <img src="/logo-mark.svg" alt="" width={28} height={28} />
           <span className="brand-word">Driftless</span>
-        </div>
+        </Link>
         <nav className="nav">
-          <NavLink to="/">Home</NavLink>
-          <NavLink to="/projects">Projects</NavLink>
-          {projects.slice(0, 8).map((p) => (
-            <NavLink key={p.id} to={`/projects/${p.id}/docs`}>
-              {p.name}
-            </NavLink>
-          ))}
+          <SideLink to="/">Home</SideLink>
+          <SideLink to="/projects">Projects</SideLink>
+          {activeProject && (
+            <div className="nav-section">
+              <div className="nav-section-label">{activeProject.name}</div>
+              <SideLink to={`/projects/${activeProject.id}/docs`}>Docs</SideLink>
+              <SideLink to={`/projects/${activeProject.id}/review`}>Review</SideLink>
+              <SideLink to={`/projects/${activeProject.id}/drift`}>Drift</SideLink>
+              <SideLink to={`/projects/${activeProject.id}/graph`}>Graph</SideLink>
+              <SideLink to={`/projects/${activeProject.id}/settings`}>Settings</SideLink>
+            </div>
+          )}
+          {projects.length > 0 && (
+            <div className="nav-section">
+              <div className="nav-section-label">All projects</div>
+              {projects.slice(0, 12).map((p) => (
+                <SideLink key={p.id} to={`/projects/${p.id}/docs`}>
+                  {p.name}
+                </SideLink>
+              ))}
+            </div>
+          )}
         </nav>
         <div style={{ marginTop: 'auto' }} className="muted">
+          {bootError && <div style={{ color: 'var(--danger)', marginBottom: '0.5rem' }}>{bootError}</div>}
           <div className="row" style={{ marginBottom: '0.5rem' }}>
             {user.avatar_url && (
               <img
@@ -77,9 +126,10 @@ export default function App() {
       <main className="main">
         <Routes>
           <Route path="/" element={<Home user={user} projects={projects} />} />
-          <Route path="/projects" element={<Projects projects={projects} onChange={() => {
-            api<{ projects: Project[] }>('/api/projects').then((r) => setProjects(r.projects));
-          }} />} />
+          <Route
+            path="/projects"
+            element={<Projects projects={projects} onChange={refreshProjects} />}
+          />
           <Route path="/projects/:projectId" element={<ProjectLayout />}>
             <Route index element={<Navigate to="docs" replace />} />
             <Route path="docs" element={<DocsPage />} />
@@ -89,16 +139,25 @@ export default function App() {
             <Route path="graph" element={<GraphPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Friendly redirects when project id omitted */}
+          <Route path="/docs" element={<PickProject projects={projects} area="docs" />} />
+          <Route path="/review" element={<PickProject projects={projects} area="review" />} />
+          <Route path="/drift" element={<PickProject projects={projects} area="drift" />} />
+          <Route path="/graph" element={<PickProject projects={projects} area="graph" />} />
+          <Route path="/settings" element={<PickProject projects={projects} area="settings" />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
     </div>
   );
 }
 
-function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
+function SideLink({ to, children }: { to: string; children: React.ReactNode }) {
   const loc = useLocation();
-  const active = loc.pathname === to || (to !== '/' && loc.pathname.startsWith(to));
+  const active =
+    to === '/'
+      ? loc.pathname === '/'
+      : loc.pathname === to || loc.pathname.startsWith(`${to}/`);
   return (
     <Link to={to} className={active ? 'active' : ''}>
       {children}
@@ -106,5 +165,23 @@ function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
   );
 }
 
-// silence unused
+function PickProject({
+  projects,
+  area,
+}: {
+  projects: Project[];
+  area: string;
+}) {
+  if (projects[0]) {
+    return <Navigate to={`/projects/${projects[0].id}/${area}`} replace />;
+  }
+  return (
+    <div className="card">
+      <h2>Choose a project</h2>
+      <p className="muted">Create a project first to open {area}.</p>
+      <Link to="/projects">Go to projects →</Link>
+    </div>
+  );
+}
+
 void useParams;

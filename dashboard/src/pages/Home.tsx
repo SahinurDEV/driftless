@@ -18,9 +18,12 @@ export default function Home({ user, projects }: { user: User; projects: Project
         ))}
         {!projects.length && (
           <div className="card">
-            <h3>No projects yet</h3>
-            <p className="muted">Create a workspace and project to start.</p>
-            <Link to="/projects">Go to projects →</Link>
+            <h3>Get started</h3>
+            <p className="muted">
+              A default workspace is ready. Create your first project to browse docs, review AI
+              edits, watch drift, and manage API keys.
+            </p>
+            <Link to="/projects">Create a project →</Link>
           </div>
         )}
       </div>

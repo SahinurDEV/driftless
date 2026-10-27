@@ -5,11 +5,26 @@ import { api, type Project } from '../lib/api';
 export default function ProjectLayout() {
   const { projectId } = useParams();
   const [project, setProject] = useState<Project | null>(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!projectId) return;
-    api<{ project: Project }>(`/api/projects/${projectId}`).then((r) => setProject(r.project));
+    setProject(null);
+    setError('');
+    api<{ project: Project }>(`/api/projects/${projectId}`)
+      .then((r) => setProject(r.project))
+      .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load project'));
   }, [projectId]);
+
+  if (error) {
+    return (
+      <div className="card">
+        <h2>Couldn’t open project</h2>
+        <p style={{ color: 'var(--danger)' }}>{error}</p>
+        <Link to="/projects">Back to projects</Link>
+      </div>
+    );
+  }
 
   if (!project) return <div className="muted">Loading project…</div>;
 
@@ -25,7 +40,7 @@ export default function ProjectLayout() {
         </div>
         <span className="badge">trust: {project.trust_mode}</span>
       </div>
-      <nav className="row" style={{ marginBottom: '1.25rem', gap: '0.35rem' }}>
+      <nav className="row project-tabs" style={{ marginBottom: '1.25rem', gap: '0.35rem' }}>
         {[
           ['docs', 'Docs'],
           ['review', 'Review'],

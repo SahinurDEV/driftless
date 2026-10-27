@@ -92,10 +92,24 @@ export async function requireAuth(env: Env, request: Request): Promise<AuthConte
 
 export class AuthError extends Error {
   status: number;
+  __authError = true as const;
   constructor(message: string, status = 401) {
     super(message);
+    this.name = 'AuthError';
     this.status = status;
   }
+}
+
+/** Robust across Workers bundling (instanceof / subclass checks can fail). */
+export function isAuthError(e: unknown): e is AuthError {
+  if (!e || typeof e !== 'object') return false;
+  const err = e as { name?: string; status?: unknown; __authError?: unknown; message?: string };
+  if ((err as AuthError).__authError === true && typeof err.status === 'number') return true;
+  if (e instanceof AuthError) return true;
+  if (err.name === 'AuthError' && (err.status === 401 || err.status === 403)) return true;
+  // Fallback: any error carrying an auth HTTP status
+  if ((err.status === 401 || err.status === 403) && typeof err.message === 'string') return true;
+  return false;
 }
 
 /** Check project role for session users; API keys must include project if scoped. */
@@ -116,7 +130,6 @@ export async function requireProjectAccess(
     .first<{ role: 'owner' | 'editor' | 'viewer' }>();
 
   if (!row) {
-    // Fallback: workspace owner of project's workspace
     const ws = await env.DB.prepare(
       `SELECT wm.role FROM projects p
        JOIN workspace_members wm ON wm.workspace_id = p.workspace_id
@@ -140,4 +153,17 @@ function assertRole(
   if (rank[have] < rank[need]) throw new AuthError('Forbidden', 403);
 }
 
-// fix typo - I accidentally wrote "of 3"
+/** If an API key is project-scoped, add a newly created project to its scope. */
+export async function expandApiKeyScope(
+  env: Env,
+  auth: AuthContext,
+  projectId: string,
+): Promise<void> {
+  if (auth.via !== 'api_key' || !auth.apiKeyId || !auth.projectIds) return;
+  if (auth.projectIds.includes(projectId)) return;
+  const next = [...auth.projectIds, projectId];
+  await env.DB.prepare(`UPDATE api_keys SET project_ids = ? WHERE id = ?`)
+    .bind(JSON.stringify(next), auth.apiKeyId)
+    .run();
+  auth.projectIds = next;
+}

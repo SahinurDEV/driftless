@@ -129,11 +129,7 @@ textarea { font-family: var(--mono); min-height: 280px; line-height: 1.45; }
   vertical-align: top;
 }
 .table th { color: var(--muted); font-weight: 500; font-size: 0.85rem; }
-.hero {
-  max-width: 560px;
-  margin: 8vh auto;
-  text-align: center;
-}
+
 .hero h1 { font-size: 2.4rem; letter-spacing: -0.04em; margin-bottom: 0.5rem; }
 .pill {
   display: inline-block;
@@ -176,3 +172,39 @@ textarea { font-family: var(--mono); min-height: 280px; line-height: 1.45; }
   .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
   .split { grid-template-columns: 1fr; }
 }
+
+.boot {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.hero-logo {
+  display: block;
+  margin: 0 auto 1rem;
+}
+.hero .pill {
+  margin-left: auto;
+  margin-right: auto;
+}
+.nav-section {
+  margin-top: 0.75rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--border);
+}
+.nav-section-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding: 0.25rem 0.65rem 0.35rem;
+}
+.project-tabs .btn { font-size: 0.9rem; }

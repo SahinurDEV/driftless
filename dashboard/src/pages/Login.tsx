@@ -1,7 +1,7 @@
 export default function Login() {
   return (
     <div className="hero">
-      <img src="/logo-dark.svg" alt="Driftless" width={220} style={{ marginBottom: '1.25rem' }} />
+      <img className="hero-logo" src="/logo-dark.svg" alt="Driftless" width={220} />
       <div className="pill">Living docs for multi-repo teams</div>
       <h1>Keep docs in sync with the code</h1>
       <p className="muted">

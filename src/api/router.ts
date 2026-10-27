@@ -1,4 +1,4 @@
-import { AuthError, requireAuth, requireProjectAccess, resolveAuth } from '../auth/context';
+import { AuthError, expandApiKeyScope, isAuthError, requireAuth, requireProjectAccess, resolveAuth } from '../auth/context';
 import { createApiKey, listApiKeys, revokeApiKey } from '../auth/keys';
 import {
   exportProjectMarkdown,
@@ -13,6 +13,7 @@ import { hashToken } from '../util/hash';
 import { addSecondsIso, nowIso } from '../util/time';
 import { decideEdit, estimateChangeSize, isSmallSafeFix } from '../trust/modes';
 import { error, json, readJson } from './json';
+import { ensureDefaultWorkspace } from '../auth/workspace';
 
 export async function handleApi(request: Request, env: Env, path: string): Promise<Response> {
   if (request.method === 'OPTIONS') {
@@ -34,6 +35,9 @@ export async function handleApi(request: Request, env: Env, path: string): Promi
       )
         .bind(auth.userId)
         .first();
+      if (user && auth.via === 'session') {
+        await ensureDefaultWorkspace(env, auth.userId);
+      }
       return json({ user, auth: { via: auth.via, permission: auth.permission } });
     }
 
@@ -128,7 +132,60 @@ export async function handleApi(request: Request, env: Env, path: string): Promi
           `INSERT INTO project_members (project_id, user_id, role, created_at) VALUES (?, ?, 'owner', ?)`,
         ).bind(id, auth.userId, ts),
       ]);
+      await expandApiKeyScope(env, auth, id);
       return json({ id, name: body.name.trim(), slug, trust_mode: trust }, 201);
+    }
+
+    // Convenience: create project (auto-creates default workspace if needed)
+    if (path === '/api/projects' && request.method === 'POST') {
+      if (auth.permission === 'read') return error('Read-only key', 403);
+      const body = await readJson<{
+        name: string;
+        slug?: string;
+        description?: string;
+        trust_mode?: TrustMode;
+        workspace_id?: string;
+      }>(request);
+      if (!body.name?.trim()) return error('name required');
+      const workspaceId = body.workspace_id || (await ensureDefaultWorkspace(env, auth.userId));
+      const mem = await env.DB.prepare(
+        `SELECT role FROM workspace_members WHERE workspace_id = ? AND user_id = ?`,
+      )
+        .bind(workspaceId, auth.userId)
+        .first<{ role: string }>();
+      if (!mem || mem.role === 'viewer') return error('Forbidden', 403);
+      const id = newId('prj');
+      const slug =
+        body.slug?.trim() ||
+        body.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '') ||
+        id.slice(0, 8);
+      // Ensure unique slug within workspace
+      let finalSlug = slug;
+      for (let i = 0; i < 6; i++) {
+        const clash = await env.DB.prepare(
+          `SELECT id FROM projects WHERE workspace_id = ? AND slug = ?`,
+        )
+          .bind(workspaceId, finalSlug)
+          .first();
+        if (!clash) break;
+        finalSlug = `${slug}-${i + 2}`;
+      }
+      const trust = body.trust_mode ?? 'review';
+      const ts = nowIso();
+      await env.DB.batch([
+        env.DB.prepare(
+          `INSERT INTO projects (id, workspace_id, name, slug, description, trust_mode, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        ).bind(id, workspaceId, body.name.trim(), finalSlug, body.description ?? null, trust, ts, ts),
+        env.DB.prepare(
+          `INSERT INTO project_members (project_id, user_id, role, created_at) VALUES (?, ?, 'owner', ?)`,
+        ).bind(id, auth.userId, ts),
+      ]);
+      await expandApiKeyScope(env, auth, id);
+      return json({ id, name: body.name.trim(), slug: finalSlug, trust_mode: trust, workspace_id: workspaceId }, 201);
     }
 
     if (path === '/api/projects' && request.method === 'GET') {
@@ -178,7 +235,11 @@ export async function handleApi(request: Request, env: Env, path: string): Promi
 
     return error('Not found', 404);
   } catch (e) {
-    if (e instanceof AuthError) return error(e.message, e.status);
+    const status = Number((e as { status?: unknown })?.status);
+    if (status === 401 || status === 403) {
+      return error(e instanceof Error ? e.message : 'Forbidden', status);
+    }
+    if (isAuthError(e)) return error(e.message, e.status);
     console.error(e);
     return error(e instanceof Error ? e.message : 'Internal error', 500);
   }
