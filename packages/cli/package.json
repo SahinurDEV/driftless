@@ -1,0 +1,10 @@
+{
+  "name": "@driftless/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "driftless": "./bin/driftless.js"
+  },
+  "description": "Optional local folder sync stub for Driftless"
+}
