@@ -1,5 +1,6 @@
 name = "driftless"
 account_id = "9a7e1fdf0f95dbdb5064685a88152d86"
+workers_dev = true
 main = "src/index.ts"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
@@ -10,7 +11,6 @@ compatibility_flags = ["nodejs_compat"]
 pattern = "driftless.sahinur.dev"
 custom_domain = true
 
-workers_dev = true
 
 
 [[d1_databases]]
