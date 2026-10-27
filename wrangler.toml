@@ -1,4 +1,5 @@
 name = "driftless"
+account_id = "9a7e1fdf0f95dbdb5064685a88152d86"
 main = "src/index.ts"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
@@ -6,7 +7,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "driftless"
-database_id = "00000000-0000-0000-0000-000000000001"
+database_id = "aec0ea6e-5d91-4ced-b8a2-778025d3adcc"
 migrations_dir = "migrations"
 
 [[r2_buckets]]
